@@ -6,7 +6,7 @@ This is the first project, part of Udacity's Deep Reinforcement Learning Nanodeg
 
 ![the environment](./env.gif)
 
-_(Source: https://github.com/udacity/deep-reinforcement-learning/tree/master/p1_navigation)
+_(Source: https://github.com/udacity/deep-reinforcement-learning/tree/master/p1_navigation)_
 
 The enviroment is a large square with friendly (yellow) and dangerous (blue) bananas, the goal being to collect the largest number of yellow while avoiding the blue. To encode that, the reward at each step is defined as `+1` for picking up a yellow banana, `-1` if a blue one is collected and `0` if nothing happened.
 
@@ -29,4 +29,7 @@ Each episode has a fixed duration and the final goal is to reach an average scor
 
 ## Instructions
 
-> The README describes how to run the code in the repository, to train the agent. For additional resources on creating READMEs or using Markdown, see here and here.
+To explore locally, you'll need to start your Jupyter server with `jupyter notebook`.
+
+The training code and related experiments are placed in the [Navigation](./Navigation.ipynb) notebook.
+If you just want to see the final agent, the [Result](./Result.ipynb) is the way to go.
