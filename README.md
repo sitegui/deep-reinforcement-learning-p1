@@ -25,7 +25,7 @@ Each episode has a fixed duration and the final goal is to reach an average scor
 3. Activate the newly created conda environment `deep-reinforcement-learning`
 4. Follow the instructions [in the section Dependecies](https://github.com/udacity/deep-reinforcement-learning#dependencies) to install your Python environment
 5. Follow the instructions [in the section Getting Started](https://github.com/udacity/deep-reinforcement-learning/tree/master/p1_navigation#getting-started) to install your Banana environment
-6. (Optional) Install GPU support, following instructions [for Cuda](https://developer.nvidia.com/cuda-downloads) and [Pytorch](https://pytorch.org/get-started/)
+6. (Optional) Install GPU support, following instructions [for Cuda](https://developer.nvidia.com/cuda-downloads) and [Pytorch](https://pytorch.org/get-started/locally/)
 
 ## Instructions
 
