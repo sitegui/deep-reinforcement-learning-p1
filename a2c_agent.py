@@ -2,19 +2,13 @@ import numpy as np
 import random
 from collections import namedtuple, deque
 
-from model import QNetwork
+from model import GaussianActorCriticNet
 
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
 import torch.optim as optim
 
-BUFFER_SIZE = int(1e5)  # replay buffer size
-BATCH_SIZE = 64         # minibatch size
-GAMMA = 0.99            # discount factor
-TAU = 1e-3              # for soft update of target parameters
-LR = 5e-4               # learning rate
-UPDATE_EVERY = 4        # how often to update the network
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -22,24 +16,28 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class Agent():
     """Interacts with and learns from the environment."""
 
-    def __init__(self, state_size, action_size, seed, back_prop_reward=False):
-        """Initialize an Agent object.
+    def __init__(self,
+                 state_dim,
+                 action_dim,
+                 discount=0.99,
+                 use_gae=True,
+                 gae_tau=1.0,
+                 entropy_weight=0.01,
+                 rollout_length=5,
+                 gradient_clip=5,
+                 max_steps=int(2e7)):
 
-        Params
-        ======
-            state_size (int): dimension of each state
-            action_size (int): dimension of each action
-            seed (int): random seed
-        """
-        self.state_size = state_size
-        self.action_size = action_size
-        self.seed = random.seed(seed)
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.discount = discount
+        self.use_gae = use_gae
+        self.gae_tau = gae_tau
+        self.entropy_weight = entropy_weight
+        self.rollout_length = rollout_length
+        self.gradient_clip = gradient_clip
+        self.max_steps = max_steps
 
-        # Q-Network
-        self.qnetwork_local = QNetwork(state_size, action_size, seed).to(device)
-        self.qnetwork_target = QNetwork(state_size, action_size, seed).to(device)
-        self.qnetwork_target.eval()
-        self.loss = nn.MSELoss()
+        self.network = GaussianActorCriticNet(state_dim, action_dim)
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
 
         # Replay memory
