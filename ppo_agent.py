@@ -23,14 +23,14 @@ class Agent():
                  state_dim,
                  action_dim,
                  discount=0.99,
-                 use_gae=True,
+                 use_gae=False,
                  gae_tau=0.95,
-                 gradient_clip=0.5,
-                 rollout_length=2048,
+                 gradient_clip=1,
+                 rollout_length=512,
                  optimization_epochs=10,
-                 mini_batch_size=64,
-                 ppo_ratio_clip=0.2,
-                 entropy_weight=0):
+                 mini_batch_size=128,
+                 ppo_ratio_clip=0.25,
+                 entropy_weight=1e-3):
 
         # Store main params
         self.env = env
@@ -52,7 +52,7 @@ class Agent():
         self.network = GaussianActorCriticNet(state_dim, action_dim)
         self.network.to(device)
         self.state_normalizer = MeanStdNormalizer()
-        self.optimizer = optim.Adam(self.network.parameters(), 3e-4, eps=1e-5)
+        self.optimizer = optim.Adam(self.network.parameters(), 1e-4)
 
         # Init environment and score tracking
         self.state = torch.tensor(self.state_normalizer(env.reset())).float().to(device)

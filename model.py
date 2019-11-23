@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class DNN(nn.Module):
-    def __init__(self, input_dim, hidden_units=(64, 64), output_dim=1, gate=F.relu):
+    def __init__(self, input_dim, hidden_units=(512, 256), output_dim=1, gate=F.relu):
         super().__init__()
         dims = (input_dim,) + hidden_units + (output_dim,)
         self.layers = nn.ModuleList([
@@ -37,7 +37,7 @@ class GaussianActorCriticNet(nn.Module):
         value = self.critic(state)
         dist = torch.distributions.Normal(mean, F.softplus(self.std))
         if action is None:
-            action = dist.sample()
+            action = dist.sample().clamp(-1, 1)
         log_prob = dist.log_prob(action).sum(-1).unsqueeze(-1)
         entropy = dist.entropy().sum(-1).unsqueeze(-1)
         return {
