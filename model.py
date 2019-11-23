@@ -46,3 +46,37 @@ class GaussianActorCriticNet(nn.Module):
             'entropy': entropy,
             'value': value
         }
+
+
+class DeterministicActorCriticNet(nn.Module):
+    def __init__(self, state_dim, action_dim, h1_size=400, h2_size=300):
+        super().__init__()
+
+        self.actor_h1 = layer_init(nn.Linear(state_dim, h1_size))
+        self.actor_h2 = layer_init(nn.Linear(h1_size, h2_size))
+        self.actor_out = layer_init(nn.Linear(h2_size, action_dim), 1e-3)
+        actor_params = [*self.actor_h1.parameters(), *self.actor_h2.parameters(), *self.actor_out.parameters()]
+        self.actor_optimizer = torch.optim.Adam(actor_params, lr=1e-4)
+
+        self.critic_h1 = layer_init(nn.Linear(state_dim, h1_size))
+        self.critic_h2 = layer_init(nn.Linear(h1_size + action_dim, h2_size))
+        self.critic_out = layer_init(nn.Linear(h2_size, 1), 1e-3)
+        critic_params = [*self.critic_h1.parameters(), *self.critic_h2.parameters(), *self.critic_out.parameters()]
+        self.critic_optimizer = torch.optim.Adam(critic_params, lr=1e-3)
+
+    def actor(self, state):
+        x = F.relu(self.actor_h1(state))
+        x = F.relu(self.actor_h2(x))
+        return torch.tanh(self.actor_out(x))
+
+    def critic(self, state, action):
+        x = F.relu(self.critic_h1(state))
+        x = F.relu(self.critic_h2(torch.cat([x, action], dim=1)))
+        return self.critic_out(x)
+
+
+def layer_init(layer, w_scale=1.0):
+    nn.init.orthogonal_(layer.weight.data)
+    layer.weight.data.mul_(w_scale)
+    nn.init.constant_(layer.bias.data, 0)
+    return layer
