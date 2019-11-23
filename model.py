@@ -4,12 +4,12 @@ import torch.nn.functional as F
 
 
 class DNN(nn.Module):
-    def __init__(self, input_dim, hidden_units=(512, 256), output_dim=1, gate=F.relu):
+    def __init__(self, input_dim, init_scales, hidden_units=(512, 256), output_dim=1, gate=F.relu):
         super().__init__()
         dims = (input_dim,) + hidden_units + (output_dim,)
         self.layers = nn.ModuleList([
-            nn.Linear(dim_in, dim_out)
-            for dim_in, dim_out in zip(dims[:-1], dims[1:])
+            layer_init(nn.Linear(dim_in, dim_out), init_scale)
+            for dim_in, dim_out, init_scale in zip(dims[:-1], dims[1:], init_scales)
         ])
         self.gate = gate
 
@@ -24,8 +24,8 @@ class GaussianActorCriticNet(nn.Module):
 
     def __init__(self, state_dim, action_dim):
         super().__init__()
-        self.actor = DNN(state_dim, output_dim=action_dim, gate=torch.tanh)
-        self.critic = DNN(state_dim, gate=torch.tanh)
+        self.actor = DNN(state_dim, [1e-1, 1e-1, 1e-3], output_dim=action_dim, gate=torch.tanh)
+        self.critic = DNN(state_dim, [1e-1, 1e-1, 1e-3], gate=torch.tanh)
 
         self.actor_params = self.actor.parameters()
         self.critic_params = self.critic.parameters()

@@ -25,10 +25,10 @@ class Agent():
                  use_gae=False,
                  gae_tau=0.95,
                  gradient_clip=1,
-                 rollout_length=512,
+                 rollout_length=1024,
                  optimization_epochs=10,
                  mini_batch_size=128,
-                 ppo_ratio_clip=0.25,
+                 ppo_ratio_clip=0.2,
                  entropy_weight=1e-3):
 
         # Store main params
@@ -81,7 +81,7 @@ class Agent():
                 next_state = self.env.reset()
                 self.scores.append(self.episode_score)
                 self.scores_window.append(self.episode_score)
-                print(f'Episode {self.episodes}\tAverage Score: {np.mean(self.scores_window):.2f}')
+                print(f'Episode {self.episodes}\tScore: {self.episode_score}\tAverage Score: {np.mean(self.scores_window):.2f}')
                 self.episodes += 1
                 self.episode_score = 0
 
@@ -129,7 +129,7 @@ class Agent():
         # Train the network
         for _ in range(self.optimization_epochs):
             # Determine the batch indexes to use
-            shuffled_indices = np.random.permutation(np.arange(self.rollout_length))
+            shuffled_indices = np.random.permutation(np.arange(t_state.shape[0]))
             used_indices = len(shuffled_indices) // self.mini_batch_size * self.mini_batch_size
             batches_indices = shuffled_indices[:used_indices].reshape(-1, self.mini_batch_size)
 
@@ -150,7 +150,7 @@ class Agent():
                     1.0 - self.ppo_ratio_clip,
                     1.0 + self.ppo_ratio_clip) * batch_advantage
                 policy_loss = -torch.min(obj, obj_clipped).mean() - self.entropy_weight * prediction['entropy'].mean()
-                value_loss = 0.5 * (batch_return - prediction['value']).pow(2).mean()
+                value_loss = F.mse_loss(batch_return, prediction['value'])
 
                 # Optimize network weights
                 self.optimizer.zero_grad()
