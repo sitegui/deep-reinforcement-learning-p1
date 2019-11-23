@@ -3,7 +3,6 @@ import random
 from collections import namedtuple, deque
 
 from model import GaussianActorCriticNet
-from normalizer import MeanStdNormalizer
 
 import torch
 import torch.nn.functional as F
@@ -51,11 +50,10 @@ class Agent():
         # Create network
         self.network = GaussianActorCriticNet(state_dim, action_dim)
         self.network.to(device)
-        self.state_normalizer = MeanStdNormalizer()
         self.optimizer = optim.Adam(self.network.parameters(), 1e-4)
 
         # Init environment and score tracking
-        self.state = torch.tensor(self.state_normalizer(env.reset())).float().to(device)
+        self.state = torch.tensor(env.reset()).float().to(device)
         self.episodes = 1
         self.episode_score = 0
         self.scores = []
@@ -97,7 +95,7 @@ class Agent():
             l_continue.append(continue_.unsqueeze(-1))
 
             # Prepare next step
-            self.state = torch.tensor(self.state_normalizer(next_state)).float().to(device)
+            self.state = torch.tensor(next_state).float().to(device)
 
         # Predict final state value
         prediction = self.network(self.state)

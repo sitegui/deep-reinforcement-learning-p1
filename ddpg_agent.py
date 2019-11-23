@@ -3,7 +3,6 @@ import random
 from collections import namedtuple, deque
 
 from model import DeterministicActorCriticNet
-from normalizer import MeanStdNormalizer
 from random_process import OrnsteinUhlenbeckProcess, GaussianProcess
 
 import torch
@@ -61,10 +60,9 @@ class Agent():
         self.target_network.load_state_dict(self.network.state_dict())
 
         self.random_process = random_process_class(size=(action_dim,), std=random_std)
-        self.state_normalizer = lambda x: x  # MeanStdNormalizer()
 
         # Init environment and score tracking
-        self.state = torch.tensor(self.state_normalizer(env.reset())).float().to(device)
+        self.state = torch.tensor(env.reset()).float().to(device)
         self.memory = Replay(self.memory_size)
         self.steps = 0
         self.episodes = 1
@@ -94,7 +92,7 @@ class Agent():
             self.episode_score = 0
 
         # Save experience
-        next_state = torch.tensor(self.state_normalizer(next_state)).float().to(device)
+        next_state = torch.tensor(next_state).float().to(device)
         for experience in zip(self.state, action, reward, next_state, done):
             self.memory.append(experience)
         self.state = next_state
