@@ -24,8 +24,8 @@ class GaussianActorCriticNet(nn.Module):
 
     def __init__(self, state_dim, action_dim):
         super().__init__()
-        self.actor = DNN(state_dim, output_dim=action_dim)
-        self.critic = DNN(state_dim)
+        self.actor = DNN(state_dim, output_dim=action_dim, gate=torch.tanh)
+        self.critic = DNN(state_dim, gate=torch.tanh)
 
         self.actor_params = self.actor.parameters()
         self.critic_params = self.critic.parameters()
@@ -33,16 +33,16 @@ class GaussianActorCriticNet(nn.Module):
         self.std = nn.Parameter(torch.zeros(action_dim))
 
     def forward(self, state, action=None):
-        state = torch.tensor(state)
         mean = torch.tanh(self.actor(state))
-        v = self.critic(state)
+        value = self.critic(state)
         dist = torch.distributions.Normal(mean, F.softplus(self.std))
         if action is None:
             action = dist.sample()
         log_prob = dist.log_prob(action).sum(-1).unsqueeze(-1)
         entropy = dist.entropy().sum(-1).unsqueeze(-1)
-        return {'a': action,
-                'log_pi_a': log_prob,
-                'ent': entropy,
-                'mean': mean,
-                'v': v}
+        return {
+            'action': action,
+            'log_prob': log_prob,
+            'entropy': entropy,
+            'value': value
+        }
