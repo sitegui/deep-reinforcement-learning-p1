@@ -18,7 +18,7 @@ class GaussianProcess(RandomProcess):
         self.std = std
 
     def sample(self):
-        return np.random.randn(*self.size) * self.std()
+        return np.random.randn(*self.size) * self.std
 
 
 class OrnsteinUhlenbeckProcess(RandomProcess):

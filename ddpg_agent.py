@@ -4,7 +4,7 @@ from collections import namedtuple, deque
 
 from model import DeterministicActorCriticNet
 from normalizer import MeanStdNormalizer
-from random_process import OrnsteinUhlenbeckProcess
+from random_process import OrnsteinUhlenbeckProcess, GaussianProcess
 
 import torch
 import torch.nn.functional as F
@@ -23,11 +23,17 @@ class Agent():
                  env,
                  state_dim,
                  action_dim,
-                 memory_size=int(1e6),
-                 warm_up=int(1e4),
-                 batch_size=64,
-                 discount=0.99,
-                 tau=1e-3):
+                 memory_size=int(1e4),
+                 warm_up=int(1e3),
+                 batch_size=128,
+                 discount=0.995,
+                 tau=1e-3,
+                 gradient_clip=1,
+                 random_process_class=GaussianProcess,
+                 random_std=0.8,
+                 random_std_decay=0.91,
+                 update_every=5,
+                 update_epochs=5):
 
         # Store main params
         self.env = env
@@ -40,6 +46,12 @@ class Agent():
         self.batch_size = batch_size
         self.discount = discount
         self.tau = tau
+        self.gradient_clip = gradient_clip
+        self.random_process_class = random_process_class
+        self.random_std = random_std
+        self.random_std_decay = random_std_decay
+        self.update_every = update_every
+        self.update_epochs = update_epochs
 
         # Create networks
         self.network = DeterministicActorCriticNet(state_dim, action_dim)
@@ -47,12 +59,14 @@ class Agent():
         self.target_network = DeterministicActorCriticNet(state_dim, action_dim)
         self.target_network.to(device)
         self.target_network.load_state_dict(self.network.state_dict())
-        self.random_process = OrnsteinUhlenbeckProcess(size=(action_dim,), std=0.2)
-        self.state_normalizer = MeanStdNormalizer()
+
+        self.random_process = random_process_class(size=(action_dim,), std=random_std)
+        self.state_normalizer = lambda x: x  # MeanStdNormalizer()
 
         # Init environment and score tracking
         self.state = torch.tensor(self.state_normalizer(env.reset())).float().to(device)
         self.memory = Replay(self.memory_size)
+        self.steps = 0
         self.episodes = 1
         self.episode_score = 0
         self.scores = []
@@ -69,12 +83,13 @@ class Agent():
         self.episode_score += np.mean(reward)
 
         # Rollover the end of episodes
-        if np.all(done):
+        if np.any(done):
             self.random_process.reset_states()
+            self.random_process.std *= self.random_std_decay
             next_state = self.env.reset()
             self.scores.append(self.episode_score)
             self.scores_window.append(self.episode_score)
-            print(f'Episode {self.episodes}\tAverage Score: {np.mean(self.scores_window):.2f}')
+            print(f'Episode {self.episodes}\tScore: {self.episode_score}\tAverage Score: {np.mean(self.scores_window):.2f}')
             self.episodes += 1
             self.episode_score = 0
 
@@ -84,8 +99,10 @@ class Agent():
             self.memory.append(experience)
         self.state = next_state
 
-        if len(self.memory) >= self.warm_up:
-            self._learn_step()
+        self.steps += 1
+        if len(self.memory) >= self.warm_up and self.steps % self.update_every == 0:
+            for _ in range(self.update_epochs):
+                self._learn_step()
 
     def _learn_step(self):
         # Sample from memory and convert to tensor
@@ -100,11 +117,12 @@ class Agent():
         next_actions = self.target_network.actor(next_states)
         next_qs = rewards + self.discount * mask * self.target_network.critic(next_states, next_actions).cpu()
         qs = self.network.critic(states, actions)
-        critic_loss = (qs - next_qs.detach().to(device)).pow(2).mul(0.5).sum(-1).mean()
+        critic_loss = F.mse_loss(qs, next_qs.detach().to(device))
 
         # Update critic
         self.network.zero_grad()
         critic_loss.backward()
+        nn.utils.clip_grad_norm_(self.network.parameters(), self.gradient_clip)
         self.network.critic_optimizer.step()
 
         # Prepare actor loss
@@ -113,6 +131,7 @@ class Agent():
         # Update actor
         self.network.zero_grad()
         actor_loss.backward()
+        nn.utils.clip_grad_norm_(self.network.parameters(), self.gradient_clip)
         self.network.actor_optimizer.step()
 
         # Soft update network
