@@ -49,20 +49,23 @@ class GaussianActorCriticNet(nn.Module):
 
 
 class DeterministicActorCriticNet(nn.Module):
-    def __init__(self, state_dim, action_dim, h1_size=256, h2_size=512):
+    def __init__(self,
+                 state_dim, action_dim,
+                 h1_size, h2_size,
+                 actor_lr, critic_lr):
         super().__init__()
 
         self.actor_h1 = layer_init(nn.Linear(state_dim, h1_size), 1e-1)
         self.actor_h2 = layer_init(nn.Linear(h1_size, h2_size), 1e-1)
         self.actor_out = layer_init(nn.Linear(h2_size, action_dim), 1e-3)
         actor_params = [*self.actor_h1.parameters(), *self.actor_h2.parameters(), *self.actor_out.parameters()]
-        self.actor_optimizer = torch.optim.Adam(actor_params, lr=1e-3)
+        self.actor_optimizer = torch.optim.Adam(actor_params, lr=actor_lr)
 
         self.critic_h1 = layer_init(nn.Linear(state_dim, h1_size), 1e-1)
         self.critic_h2 = layer_init(nn.Linear(h1_size + action_dim, h2_size), 1e-1)
         self.critic_out = layer_init(nn.Linear(h2_size, 1), 1e-3)
         critic_params = [*self.critic_h1.parameters(), *self.critic_h2.parameters(), *self.critic_out.parameters()]
-        self.critic_optimizer = torch.optim.Adam(critic_params, lr=1e-4)
+        self.critic_optimizer = torch.optim.Adam(critic_params, lr=critic_lr)
 
     def actor(self, state):
         x = F.relu(self.actor_h1(state))

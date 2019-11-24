@@ -32,7 +32,11 @@ class Agent():
                  random_std=0.8,
                  random_std_decay=0.91,
                  update_every=5,
-                 update_epochs=5):
+                 update_epochs=5,
+                 h1_size=512,
+                 h2_size=256,
+                 actor_lr=1e-3,
+                 critic_lr=1e-4):
 
         # Store main params
         self.env = env
@@ -51,11 +55,15 @@ class Agent():
         self.random_std_decay = random_std_decay
         self.update_every = update_every
         self.update_epochs = update_epochs
+        self.h1_size = h1_size
+        self.h2_size = h2_size
+        self.actor_lr = actor_lr
+        self.critic_lr = critic_lr
 
         # Create networks
-        self.network = DeterministicActorCriticNet(state_dim, action_dim)
+        self.network = DeterministicActorCriticNet(state_dim, action_dim, h1_size, h2_size, actor_lr, critic_lr)
         self.network.to(device)
-        self.target_network = DeterministicActorCriticNet(state_dim, action_dim)
+        self.target_network = DeterministicActorCriticNet(state_dim, action_dim, h1_size, h2_size, actor_lr, critic_lr)
         self.target_network.to(device)
         self.target_network.load_state_dict(self.network.state_dict())
 
@@ -136,6 +144,9 @@ class Agent():
         for target_param, param in zip(self.target_network.parameters(), self.network.parameters()):
             target_param.detach_()
             target_param.copy_(target_param * (1.0 - self.tau) + param * self.tau)
+
+    def save(self, file_name):
+        torch.save(self.network, f'models/{file_name}.pth')
 
 
 class Replay:

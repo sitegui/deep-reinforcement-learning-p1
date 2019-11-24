@@ -157,3 +157,6 @@ class Agent():
                 (policy_loss + value_loss).backward()
                 nn.utils.clip_grad_norm_(self.network.parameters(), self.gradient_clip)
                 self.optimizer.step()
+
+    def save(self, file_name):
+        torch.save(self.network, f'models/{file_name}.pth')
