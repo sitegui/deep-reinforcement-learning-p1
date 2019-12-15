@@ -36,11 +36,11 @@ class GymEnvWrapper:
 gym_env = GymEnvWrapper(env, brain_name)
 
 
-def train(agent, max_minutes):
+def train(agent, max_minutes, max_episodes):
     start = time.time()
     while True:
         agent.train_step()
-        if time.time() - start > max_minutes * 60:
+        if time.time() - start > max_minutes * 60 or agent.episodes > max_episodes:
             break
         if agent.episodes >= 100:
             avg_score = np.mean(agent.scores_window)
@@ -54,6 +54,7 @@ def train(agent, max_minutes):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--max_minutes', type=int, default=60)
+    parser.add_argument('--max_episodes', type=int, default=2000)
     parser.add_argument('--name', type=str, default='player')
     parser.add_argument('--memory_size', type=int, default=int(1e5))
     parser.add_argument('--warm_up', type=int, default=int(1e4))
@@ -75,5 +76,5 @@ if __name__ == "__main__":
     params = args.__dict__
 
     print(f'Train agent with params: {params}')
-    agent = train(ddpg_agent.Agent(gym_env, state_size, action_size, params), args.max_minutes)
+    agent = train(ddpg_agent.Agent(gym_env, state_size, action_size, params), args.max_minutes, args.max_episodes)
     agent.save()
