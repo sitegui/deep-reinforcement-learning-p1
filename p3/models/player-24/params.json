@@ -1,0 +1,1 @@
+{"max_minutes": 120, "max_episodes": 3000, "name": "player-24", "memory_size": 100000, "warm_up": 10000, "batch_size": 1024, "discount": 0.99, "tau": 0.01, "gradient_clip": 0.5, "random_process": "ou", "random_theta": 0.1, "random_std": 1.0, "random_std_decay": 0.99, "update_every": 4, "update_epochs": 8, "h1_size": 32, "h2_size": 512, "actor_lr": 0.0001, "critic_lr": 0.0005}
