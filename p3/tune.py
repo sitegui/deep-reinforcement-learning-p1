@@ -2,13 +2,16 @@ import random
 import json
 import os
 import digitalocean
+import dotenv
+
+dotenv.load_dotenv()
 
 region = 'fra1'
-size = 'x'
-image = 'x'
+size = 'c-4'
+image = '56350189'
 token = os.environ['DO_TOKEN']
 ssh_keys = 'd3:5f:69:0e:50:15:2e:b3:49:fd:92:d0:25:a8:c6:36,cc:5e:c0:80:13:c1:f5:7d:10:d6:db:5c:9b:05:06:7d'
-commit = ''
+commit = 'e07ae348490258fc0036c1ea10283a2c5cfbfce4'
 
 params_spec = {
     'max_minutes': [120],
@@ -64,7 +67,6 @@ for i in range(0, num_runs, runs_per_node):
     docker build -t p3 .
     {droplet_commands}
     '''
-    print(user_data)
     droplet = digitalocean.Droplet(
         token=token,
         name=droplet_name,

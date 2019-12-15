@@ -6,3 +6,4 @@ Tennis_Linux_NoVis
 *.log
 .vscode
 __pycache__
+.env
