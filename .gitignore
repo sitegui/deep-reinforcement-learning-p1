@@ -1,6 +1,7 @@
 Reacher_Linux
 Banana_Linux
 Tennis_Linux
+Tennis_Linux_NoVis
 .ipynb_checkpoints
 *.log
 .vscode
