@@ -112,7 +112,7 @@ class Agent:
         actions = torch.tensor(actions).to(device)
         rewards = torch.tensor(rewards).unsqueeze(-1)
         next_states = torch.stack(next_states)
-        mask = torch.tensor(1 - np.array(dones)).unsqueeze(-1)
+        mask = torch.tensor(1. - np.array(dones)).unsqueeze(-1).float()
 
         # Prepare critic loss
         next_actions = self.target_network.actor(next_states)
